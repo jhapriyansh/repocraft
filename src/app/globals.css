@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-rc-bg text-slate-100;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    sans-serif;
+}
+
+.neo-card {
+  @apply bg-rc-card border-2 border-slate-100 rounded-neo shadow-neo;
+}
+
+.neo-button {
+  @apply inline-flex items-center justify-center border-2 border-slate-100 rounded-neo px-4 py-2 font-semibold shadow-neo bg-rc-accent text-slate-950 hover:-translate-y-0.5 active:translate-y-0 transition-transform;
+}
+
+.neo-button-ghost {
+  @apply inline-flex items-center justify-center border-2 border-slate-100 rounded-neo px-3 py-1 font-semibold bg-transparent text-slate-100 shadow-neo hover:-translate-y-0.5 active:translate-y-0 transition-transform;
+}
+
+.neo-pill {
+  @apply inline-flex items-center border-2 border-slate-100 rounded-full px-3 py-1 text-xs font-semibold shadow-neo bg-rc-bg;
+}
