@@ -2,28 +2,191 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------- THEME TOKENS (ACID TERMINAL) ---------- */
+
 :root {
   color-scheme: dark;
+
+  /* Core palette */
+  --rc-bg: #050816;              /* page background */
+  --rc-bg-alt: #080e1f;          /* slightly lighter */
+  --rc-card: #020617;            /* card background */
+  --rc-border: #e5e7eb;          /* border / lines */
+
+  --rc-accent: #c9ff00;          /* acid lime */
+  --rc-accent-soft: rgba(201, 255, 0, 0.08);
+  --rc-accent-2: #a855f7;        /* electric purple */
+
+  --rc-text: #f9fafb;            /* primary text */
+  --rc-text-muted: #9ca3af;      /* secondary text */
+}
+
+/* ---------- GLOBAL RESET / BODY ---------- */
+
+html,
+body {
+  padding: 0;
+  margin: 0;
 }
 
 body {
-  @apply bg-rc-bg text-slate-100;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #111827 0, var(--rc-bg) 45%, #020617 100%);
+  color: var(--rc-text);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    sans-serif;
+    ui-sans-serif, sans-serif;
 }
 
+/* For the main Next app container if you use it */
+#__next {
+  min-height: 100vh;
+}
+
+/* ---------- UTILITY COLOR CLASSES ---------- */
+
+.bg-rc-bg {
+  background-color: var(--rc-bg);
+}
+
+.bg-rc-card {
+  background-color: var(--rc-card);
+}
+
+.bg-rc-accent {
+  background-color: var(--rc-accent);
+}
+
+.text-rc-accent {
+  color: var(--rc-accent);
+}
+
+.text-rc-muted {
+  color: var(--rc-text-muted);
+}
+
+/* ---------- NEO-BRUTAL COMPONENT STYLES ---------- */
+
+.rounded-neo {
+  border-radius: 0.9rem;
+}
+
+.shadow-neo {
+  /* soft helper, if you still use it somewhere */
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* Hard brutalist shadow (used on buttons/cards where you want the feel) */
+.brutal-shadow {
+  box-shadow: 4px 4px 0 0 #000000;
+}
+
+/* Cards */
 .neo-card {
-  @apply bg-rc-card border-2 border-slate-100 rounded-neo shadow-neo;
+  background: var(--rc-card);
+  border: 2px solid var(--rc-border);
+  border-radius: 0.9rem;
+  box-shadow: 4px 4px 0 0 #000000;
 }
 
-.neo-button {
-  @apply inline-flex items-center justify-center border-2 border-slate-100 rounded-neo px-4 py-2 font-semibold shadow-neo bg-rc-accent text-slate-950 hover:-translate-y-0.5 active:translate-y-0 transition-transform;
-}
-
+/* Ghost button (used everywhere in your app) */
 .neo-button-ghost {
-  @apply inline-flex items-center justify-center border-2 border-slate-100 rounded-neo px-3 py-1 font-semibold bg-transparent text-slate-100 shadow-neo hover:-translate-y-0.5 active:translate-y-0 transition-transform;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+
+  padding: 0.25rem 0.9rem;
+  border-radius: 9999px;
+  border: 2px solid var(--rc-border);
+
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--rc-text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  box-shadow: 3px 3px 0 0 #000000;
+  transition: transform 0.09s ease-out, box-shadow 0.09s ease-out,
+    background 0.09s ease-out, color 0.09s ease-out, border-color 0.09s ease-out;
 }
 
+.neo-button-ghost:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 0 #000000;
+  border-color: var(--rc-accent);
+  background: radial-gradient(circle at top left, var(--rc-accent-soft), #020617);
+  color: var(--rc-accent);
+}
+
+.neo-button-ghost:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 0 #000000;
+}
+
+/* Primary accent button (if you ever need a filled one) */
+.neo-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  border: 2px solid #000000;
+
+  background: linear-gradient(135deg, var(--rc-accent), var(--rc-accent-2));
+  color: #020617;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+
+  box-shadow: 4px 4px 0 0 #000000;
+  transition: transform 0.09s ease-out, box-shadow 0.09s ease-out,
+    filter 0.09s ease-out;
+}
+
+.neo-button-primary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 0 #000000;
+  filter: brightness(1.05);
+}
+
+.neo-button-primary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 0 #000000;
+}
+
+/* Small pill tags (language, updated at, etc.) */
 .neo-pill {
-  @apply inline-flex items-center border-2 border-slate-100 rounded-full px-3 py-1 text-xs font-semibold shadow-neo bg-rc-bg;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.6rem;
+  border-radius: 9999px;
+  border: 2px solid #000000;
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--rc-text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* Scrollbars (optional but nice for dark “terminal” feel) */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }

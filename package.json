@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@octokit/rest": "^22.0.1",
     "axios": "^1.7.2",
     "date-fns": "^3.6.0",
     "groq-sdk": "^0.6.0",
