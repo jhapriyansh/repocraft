@@ -21,9 +21,8 @@ export async function GET(
   const token = (session as any).accessToken as string;
   const details = await fetchRepoDetails(token, owner, params.name);
 
-  // compute a tiny tree summary
   const tree = details.tree?.tree || [];
-  const firstFiles = tree.slice(0, 60).map((f: any) => f.path);
+  const firstFiles = tree.slice(0, 80).map((f: any) => f.path);
   const treeSummary = firstFiles.join("\n");
 
   return NextResponse.json({

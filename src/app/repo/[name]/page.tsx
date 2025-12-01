@@ -14,6 +14,8 @@ type RepoDetails = {
 
 type GenType = "readme" | "portfolio" | "resume" | "linkedin";
 
+type Usage = { used: number; limit: number; remaining: number };
+
 export default function RepoPage({ params }: { params: { name: string } }) {
   const searchParams = useSearchParams();
   const owner = searchParams.get("owner");
@@ -21,15 +23,20 @@ export default function RepoPage({ params }: { params: { name: string } }) {
   const router = useRouter();
 
   const [details, setDetails] = useState<RepoDetails | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingDetails, setLoadingDetails] = useState(true);
+
   const [genLoading, setGenLoading] = useState<GenType | null>(null);
   const [active, setActive] = useState<GenType>("readme");
   const [result, setResult] = useState<string>("");
 
+  const [usage, setUsage] = useState<Usage | null>(null);
+  const [prStatus, setPrStatus] = useState<string | null>(null);
+
+  // fetch repo details
   useEffect(() => {
     if (!owner) return;
     const run = async () => {
-      setLoading(true);
+      setLoadingDetails(true);
       const res = await fetch(
         `/api/repos/${encodeURIComponent(params.name)}/details?owner=${owner}`
       );
@@ -37,16 +44,28 @@ export default function RepoPage({ params }: { params: { name: string } }) {
         const data = await res.json();
         setDetails(data);
       }
-      setLoading(false);
+      setLoadingDetails(false);
     };
     run();
   }, [owner, params.name]);
+
+  // fetch usage (for rate bar)
+  useEffect(() => {
+    const run = async () => {
+      const res = await fetch("/api/usage");
+      if (!res.ok) return;
+      const data = await res.json();
+      setUsage(data);
+    };
+    run();
+  }, []);
 
   const handleGenerate = async (type: GenType) => {
     if (!details) return;
     setActive(type);
     setGenLoading(type);
     setResult("");
+    setPrStatus(null);
 
     const payload = {
       repoName: details.repoInfo?.name,
@@ -54,25 +73,97 @@ export default function RepoPage({ params }: { params: { name: string } }) {
       treeSummary: details.treeSummary,
       pkgJson: details.pkgJson,
       readme: details.readme,
-      repoUrl,
+      repoUrl
     };
 
-    const res = await fetch(`/api/generate/${type}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch(`/api/generate/${type}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    const data = await res.json();
-    setResult(data.content ?? JSON.stringify(data, null, 2));
-    setGenLoading(null);
+      if (!res.ok || !res.body) {
+        const text = await res.text().catch(() => "");
+        setResult(text || `Error: ${res.status}`);
+        setGenLoading(null);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "";
+
+      // streaming loop
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        full += chunk;
+        setResult((prev) => prev + chunk);
+      }
+
+      // update usage locally (best-effort)
+      setUsage((prev) =>
+        prev
+          ? {
+              ...prev,
+              used: Math.min(prev.limit, prev.used + 1),
+              remaining: Math.max(0, prev.remaining - 1)
+            }
+          : prev
+      );
+    } catch (err: any) {
+      setResult(`Error: ${String(err)}`);
+    } finally {
+      setGenLoading(null);
+    }
   };
 
   const labelMap: Record<GenType, string> = {
     readme: "README.md",
     portfolio: "Portfolio Entry (JSON)",
     resume: "Resume Bullets (JSON)",
-    linkedin: "LinkedIn Post",
+    linkedin: "LinkedIn Post"
+  };
+
+  const handleCopy = () => {
+    if (!result) return;
+    navigator.clipboard.writeText(result);
+  };
+
+  const handleCreatePr = async () => {
+    if (!details || !owner || !result || active !== "readme") return;
+
+    setPrStatus("Creating PR…");
+
+    try {
+      const res = await fetch(
+        `/api/repos/${encodeURIComponent(params.name)}/update-readme`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            owner,
+            readme: result
+          })
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setPrStatus(data.error || "Failed to create PR");
+        return;
+      }
+
+      const data = await res.json();
+      setPrStatus("PR created! Opening in a new tab…");
+      if (data.prUrl) {
+        window.open(data.prUrl, "_blank");
+      }
+    } catch (err: any) {
+      setPrStatus(`Failed to create PR: ${String(err)}`);
+    }
   };
 
   return (
@@ -84,6 +175,7 @@ export default function RepoPage({ params }: { params: { name: string } }) {
         ← Back to dashboard
       </button>
 
+      {/* REPO HEADER */}
       <div className="neo-card px-5 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -112,10 +204,47 @@ export default function RepoPage({ params }: { params: { name: string } }) {
         </div>
       </div>
 
+      {/* FILE TREE PREVIEW */}
+      {details?.treeSummary && (
+        <div className="neo-card px-5 py-4">
+          <p className="text-xs text-slate-400 uppercase tracking-widest mb-2">
+            FILE TREE (TRUNCATED)
+          </p>
+          <pre className="mt-1 text-[11px] max-h-64 overflow-auto whitespace-pre-wrap">
+            {details.treeSummary}
+          </pre>
+        </div>
+      )}
+
+      {/* GENERATE SECTION */}
       <div className="neo-card px-5 py-4">
         <p className="text-xs text-slate-400 uppercase tracking-widest mb-3">
           GENERATE
         </p>
+
+        {/* rate bar */}
+        {usage && (
+          <div className="mb-3">
+            <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+              <span>Daily free limit</span>
+              <span>
+                {usage.used}/{usage.limit} used
+              </span>
+            </div>
+            <div className="h-2 border-2 border-slate-100 rounded-neo bg-rc-bg overflow-hidden">
+              <div
+                className="h-full bg-rc-accent"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    (usage.used / Math.max(1, usage.limit)) * 100
+                  )}%`
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2 mb-3">
           {(["readme", "portfolio", "resume", "linkedin"] as GenType[]).map(
             (t) => (
@@ -138,24 +267,42 @@ export default function RepoPage({ params }: { params: { name: string } }) {
         </p>
       </div>
 
+      {/* OUTPUT SECTION */}
       <div className="neo-card px-5 py-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs text-slate-400 uppercase tracking-widest">
             OUTPUT
           </p>
-          <button
-            className="neo-button-ghost text-[10px]"
-            onClick={() => {
-              if (!result) return;
-              navigator.clipboard.writeText(result);
-            }}
-          >
-            Copy to clipboard
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="neo-button-ghost text-[10px]"
+              onClick={handleCopy}
+            >
+              Copy to clipboard
+            </button>
+            <button
+              className={`neo-button-ghost text-[10px] ${
+                active !== "readme" || !result
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+              disabled={active !== "readme" || !result}
+              onClick={handleCreatePr}
+            >
+              Create README PR
+            </button>
+          </div>
         </div>
+
+        {prStatus && (
+          <p className="text-[10px] text-slate-400 mb-2">{prStatus}</p>
+        )}
+
         <div className="mt-2 text-xs">
           {genLoading ? (
-            <p className="text-slate-400">Crafting {labelMap[genLoading]}…</p>
+            <p className="text-slate-400">
+              Crafting {labelMap[genLoading]}… (streaming)
+            </p>
           ) : result ? (
             active === "readme" || active === "linkedin" ? (
               <ReactMarkdown className="prose prose-invert max-w-none prose-pre:bg-rc-bg prose-pre:border-2 prose-pre:border-slate-100 prose-pre:rounded-neo">
