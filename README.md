@@ -1,5 +1,5 @@
 # RepoCraft
-RepoCraft is an innovative tool that transforms GitHub repositories into high-quality documentation, portfolio entries, resume bullets, and LinkedIn posts. This project aims to simplify the process of showcasing projects and skills, providing a seamless experience for developers to highlight their work.
+RepoCraft is an innovative tool that transforms GitHub repositories into high-quality documentation, portfolio entries, resume bullets, and LinkedIn posts. This project aims to simplify the process of showcasing projects and skills, providing a seamless experience for developers to highlight their work. Deployed on [vercel](https://repocraft-phi.vercel.app/)
 
 ## Features
 * Generate documentation for GitHub repositories
