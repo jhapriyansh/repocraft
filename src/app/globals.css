@@ -3,190 +3,133 @@
 @tailwind utilities;
 
 /* ---------- THEME TOKENS (ACID TERMINAL) ---------- */
-
 :root {
   color-scheme: dark;
 
-  /* Core palette */
-  --rc-bg: #050816;              /* page background */
-  --rc-bg-alt: #080e1f;          /* slightly lighter */
-  --rc-card: #020617;            /* card background */
-  --rc-border: #e5e7eb;          /* border / lines */
+  --acid-bg: #050505; /* Almost pure black */
+  --acid-card: #000000; /* Pure black */
+  --acid-border: #333333; /* Dark grey for inactive borders */
+  --acid-border-active: #c9ff00; /* Acid Lime */
 
-  --rc-accent: #c9ff00;          /* acid lime */
-  --rc-accent-soft: rgba(201, 255, 0, 0.08);
-  --rc-accent-2: #a855f7;        /* electric purple */
+  --acid-primary: #c9ff00; /* Lime */
+  --acid-secondary: #7c3aed; /* Electric Purple */
 
-  --rc-text: #f9fafb;            /* primary text */
-  --rc-text-muted: #9ca3af;      /* secondary text */
+  --acid-text-main: #eeeeee;
+  --acid-text-dim: #888888;
 }
-
-/* ---------- GLOBAL RESET / BODY ---------- */
 
 html,
 body {
   padding: 0;
   margin: 0;
+  height: 100%;
 }
 
 body {
-  min-height: 100vh;
-  background: radial-gradient(circle at top, #111827 0, var(--rc-bg) 45%, #020617 100%);
-  color: var(--rc-text);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    ui-sans-serif, sans-serif;
+  background-color: var(--acid-bg);
+  /* Subtle mesh gradient background */
+  background-image: radial-gradient(
+      circle at 15% 50%,
+      rgba(124, 58, 237, 0.08),
+      transparent 25%
+    ),
+    radial-gradient(circle at 85% 30%, rgba(201, 255, 0, 0.05), transparent 25%);
+  color: var(--acid-text-main);
 }
 
-/* For the main Next app container if you use it */
-#__next {
-  min-height: 100vh;
+/* ---------- COMPONENT UTILITIES ---------- */
+
+/* The Main Card Container */
+.acid-card {
+  background-color: var(--acid-card);
+  border: 1px solid var(--acid-border);
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
 }
 
-/* ---------- UTILITY COLOR CLASSES ---------- */
-
-.bg-rc-bg {
-  background-color: var(--rc-bg);
+/* Hover effect for interactive cards */
+.acid-card-interactive:hover {
+  border-color: var(--acid-primary);
+  box-shadow: 0 0 15px -3px rgba(201, 255, 0, 0.2);
+  transform: translateY(-2px);
 }
 
-.bg-rc-card {
-  background-color: var(--rc-card);
-}
-
-.bg-rc-accent {
-  background-color: var(--rc-accent);
-}
-
-.text-rc-accent {
-  color: var(--rc-accent);
-}
-
-.text-rc-muted {
-  color: var(--rc-text-muted);
-}
-
-/* ---------- NEO-BRUTAL COMPONENT STYLES ---------- */
-
-.rounded-neo {
-  border-radius: 0.9rem;
-}
-
-.shadow-neo {
-  /* soft helper, if you still use it somewhere */
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
-}
-
-/* Hard brutalist shadow (used on buttons/cards where you want the feel) */
-.brutal-shadow {
-  box-shadow: 4px 4px 0 0 #000000;
-}
-
-/* Cards */
-.neo-card {
-  background: var(--rc-card);
-  border: 2px solid var(--rc-border);
-  border-radius: 0.9rem;
-  box-shadow: 4px 4px 0 0 #000000;
-}
-
-/* Ghost button (used everywhere in your app) */
-.neo-button-ghost {
+/* Ghost Button (Outline) */
+.acid-btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-
-  padding: 0.25rem 0.9rem;
-  border-radius: 9999px;
-  border: 2px solid var(--rc-border);
-
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--rc-text);
-  font-size: 0.7rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-
-  box-shadow: 3px 3px 0 0 #000000;
-  transition: transform 0.09s ease-out, box-shadow 0.09s ease-out,
-    background 0.09s ease-out, color 0.09s ease-out, border-color 0.09s ease-out;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border: 1px solid var(--acid-border);
+  color: var(--acid-text-dim);
+  transition: all 0.2s;
+  border-radius: 2px;
 }
 
-.neo-button-ghost:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 0 #000000;
-  border-color: var(--rc-accent);
-  background: radial-gradient(circle at top left, var(--rc-accent-soft), #020617);
-  color: var(--rc-accent);
+.acid-btn-ghost:hover:not(:disabled) {
+  border-color: var(--acid-primary);
+  color: var(--acid-primary);
+  background: rgba(201, 255, 0, 0.05);
+  box-shadow: 0 0 10px rgba(201, 255, 0, 0.2);
 }
 
-.neo-button-ghost:active {
-  transform: translate(1px, 1px);
-  box-shadow: 2px 2px 0 0 #000000;
+.acid-btn-ghost:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
-/* Primary accent button (if you ever need a filled one) */
-.neo-button-primary {
+/* Primary Button (Filled) */
+.acid-btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-
-  padding: 0.4rem 1rem;
-  border-radius: 9999px;
-  border: 2px solid #000000;
-
-  background: linear-gradient(135deg, var(--rc-accent), var(--rc-accent-2));
-  color: #020617;
-  font-size: 0.78rem;
-  font-weight: 800;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-
-  box-shadow: 4px 4px 0 0 #000000;
-  transition: transform 0.09s ease-out, box-shadow 0.09s ease-out,
-    filter 0.09s ease-out;
+  letter-spacing: 0.1em;
+  background: var(--acid-primary);
+  color: black;
+  border: 1px solid var(--acid-primary);
+  transition: all 0.2s;
+  border-radius: 2px;
 }
 
-.neo-button-primary:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 6px 6px 0 0 #000000;
-  filter: brightness(1.05);
+.acid-btn-primary:hover {
+  background: #b6e600;
+  box-shadow: 0 0 15px rgba(201, 255, 0, 0.5);
 }
 
-.neo-button-primary:active {
-  transform: translate(1px, 1px);
-  box-shadow: 3px 3px 0 0 #000000;
-}
-
-/* Small pill tags (language, updated at, etc.) */
-.neo-pill {
+/* Tech Pills (Tags) */
+.acid-pill {
   display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.6rem;
-  border-radius: 9999px;
-  border: 2px solid #000000;
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--rc-text-muted);
+  padding: 0.1rem 0.5rem;
   font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  border: 1px solid var(--acid-border);
+  color: var(--acid-text-dim);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-/* Scrollbars (optional but nice for dark “terminal” feel) */
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-*::-webkit-scrollbar-track {
-  background: #020617;
+::-webkit-scrollbar-track {
+  background: var(--acid-bg);
 }
-
-*::-webkit-scrollbar-thumb {
-  background: #1f2937;
-  border-radius: 9999px;
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
 }
-
-*::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--acid-primary);
 }

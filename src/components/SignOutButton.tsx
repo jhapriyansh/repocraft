@@ -6,9 +6,9 @@ export default function SignOutButton() {
   return (
     <button
       onClick={() => signOut({ callbackUrl: "/" })}
-      className="neo-button-ghost text-xs"
+      className="text-xs text-[var(--acid-text-dim)] hover:text-red-400 hover:underline transition-colors uppercase tracking-widest"
     >
-      SIGN OUT
+      [ Sign Out ]
     </button>
   );
 }

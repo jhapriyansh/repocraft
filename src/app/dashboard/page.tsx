@@ -1,5 +1,3 @@
-// src/app/dashboard/page.tsx
-
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -54,34 +52,46 @@ export default function DashboardPage() {
   }, [status, page]);
 
   if (status === "loading") {
-    return <p className="text-sm text-slate-400">Checking session…</p>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-[var(--acid-primary)] animate-pulse font-mono text-sm">
+        [ SYSTEM: VERIFYING SESSION... ]
+      </div>
+    );
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[var(--acid-bg)] pb-10">
       <Navbar />
 
-      <div className="space-y-6 mt-4">
+      <main className="max-w-5xl mx-auto px-4 mt-8 space-y-6">
         {/* HEADER */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-black">Your Repositories</h1>
+        <div className="flex items-end justify-between border-b border-[var(--acid-border)] pb-4">
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              <span className="text-[var(--acid-primary)]">/root</span>
+              /repositories
+            </h1>
+            <p className="text-xs text-[var(--acid-text-dim)] mt-1">
+              Select a target to analyze
+            </p>
+          </div>
 
-          {/* SINGLE signout button */}
-          <button
-            onClick={() => signOut()}
-            className="neo-button-ghost text-xs"
-          >
-            Sign out
-          </button>
+          <div className="text-[10px] text-[var(--acid-secondary)] font-mono">
+            STATUS: CONNECTED
+          </div>
         </div>
 
         {/* REPO LIST */}
         {loading ? (
-          <p className="text-sm text-slate-400">Loading repositories…</p>
+          <div className="text-center py-20 text-sm text-[var(--acid-text-dim)] font-mono">
+            &gt; FETCHING DATA PACKETS...
+          </div>
         ) : repos.length === 0 ? (
-          <p className="text-sm text-slate-400">No repositories found.</p>
+          <p className="text-sm text-[var(--acid-text-dim)]">
+            No repositories found.
+          </p>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {repos.map((repo) => (
               <button
                 key={repo.id}
@@ -92,32 +102,37 @@ export default function DashboardPage() {
                     }&url=${encodeURIComponent(repo.htmlUrl)}`
                   )
                 }
-                className="neo-card px-4 py-3 text-left hover:-translate-y-0.5 transition-transform"
+                className="acid-card acid-card-interactive p-4 text-left flex flex-col justify-between h-32 group"
               >
-                <div className="flex justify-between items-start gap-3">
-                  <div>
-                    <p className="text-sm font-bold">{repo.name}</p>
-                    {repo.description && (
-                      <p className="text-xs text-slate-300 mt-1 line-clamp-2">
-                        {repo.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="text-sm font-bold text-white group-hover:text-[var(--acid-primary)] truncate pr-2">
+                      {repo.name}
+                    </p>
                     {repo.language && (
-                      <span className="neo-pill text-[10px]">
+                      <span className="text-[9px] uppercase border border-[var(--acid-border)] px-1.5 py-0.5 text-[var(--acid-text-dim)] group-hover:border-[var(--acid-primary)] group-hover:text-[var(--acid-primary)] transition-colors">
                         {repo.language}
                       </span>
                     )}
-                    <span className="text-[10px] text-slate-500">
-                      Updated:{" "}
-                      {new Date(repo.updatedAt).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
                   </div>
+                  {repo.description && (
+                    <p className="text-xs text-[var(--acid-text-dim)] line-clamp-2 font-mono opacity-80">
+                      {repo.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-end mt-2">
+                  <span className="text-[10px] text-[var(--acid-text-dim)]">
+                    ID: {repo.id.toString().slice(0, 6)}
+                  </span>
+                  <span className="text-[10px] text-[var(--acid-text-dim)] group-hover:text-white transition-colors">
+                    {new Date(repo.updatedAt).toLocaleDateString(undefined, {
+                      month: "2-digit",
+                      day: "2-digit",
+                      year: "2-digit",
+                    })}
+                  </span>
                 </div>
               </button>
             ))}
@@ -125,26 +140,28 @@ export default function DashboardPage() {
         )}
 
         {/* PAGINATION */}
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex items-center justify-center gap-4 mt-8 border-t border-[var(--acid-border)] pt-6">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="neo-button-ghost text-xs disabled:opacity-40"
+            className="acid-btn-ghost text-xs"
           >
-            ← Previous
+            &lt; PREV
           </button>
 
-          <p className="text-xs text-slate-500">Page {page}</p>
+          <span className="text-xs font-mono text-[var(--acid-primary)] bg-[rgba(201,255,0,0.1)] px-3 py-1 rounded">
+            PAGE {page}
+          </span>
 
           <button
             disabled={!hasMore}
             onClick={() => setPage((p) => p + 1)}
-            className="neo-button-ghost text-xs disabled:opacity-40"
+            className="acid-btn-ghost text-xs"
           >
-            Next →
+            NEXT &gt;
           </button>
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 }

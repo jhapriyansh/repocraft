@@ -8,13 +8,24 @@ export default function Navbar() {
   const { data: session } = useSession();
 
   return (
-    <div className="w-full neo-card px-6 py-4 flex justify-between items-center mb-6">
-      <Link href="/dashboard" className="flex items-center gap-2">
-        <div className="neo-pill bg-rc-accent text-black font-bold">RC</div>
-        <span className="font-black tracking-wide text-white">RepoCraft</span>
-      </Link>
+    <nav className="w-full border-b border-[var(--acid-border)] bg-[var(--acid-card)] sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+        <Link href="/dashboard" className="flex items-center gap-3 group">
+          <div className="w-8 h-8 bg-[var(--acid-primary)] text-black font-black flex items-center justify-center text-xs shadow-[0_0_10px_rgba(201,255,0,0.4)]">
+            RC
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold tracking-widest text-white group-hover:text-[var(--acid-primary)] transition-colors">
+              REPOCRAFT
+            </span>
+            <span className="text-[10px] text-[var(--acid-text-dim)] font-mono">
+              v2.0.4 :: TERMINAL
+            </span>
+          </div>
+        </Link>
 
-      {session && <SignOutButton />}
-    </div>
+        {session && <SignOutButton />}
+      </div>
+    </nav>
   );
 }
