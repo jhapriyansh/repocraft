@@ -17,7 +17,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${mono.className} bg-[var(--acid-bg)] text-[var(--acid-text-main)] min-h-screen selection:bg-[var(--acid-primary)] selection:text-black`}>
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+      </head>
+      <body
+        className={`${mono.className} bg-[var(--acid-bg)] text-[var(--acid-text-main)] min-h-screen selection:bg-[var(--acid-primary)] selection:text-black`}
+      >
         <SessionWrapper>{children}</SessionWrapper>
       </body>
     </html>
