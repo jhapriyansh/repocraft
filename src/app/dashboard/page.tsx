@@ -1,6 +1,7 @@
+// src/app/dashboard/page.tsx
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -24,6 +25,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [query, setQuery] = useState("");
+  const [username, setUsername] = useState<string | null>(null);
 
   // redirect if not authenticated
   useEffect(() => {
@@ -32,24 +35,35 @@ export default function DashboardPage() {
     }
   }, [status]);
 
-  // fetch repos with pagination
-  const loadRepos = async (pageNum: number) => {
-    setLoading(true);
-    const res = await fetch(`/api/repos?page=${pageNum}`);
-
-    if (res.ok) {
-      const data = await res.json();
-      setRepos(data.repos);
-      setHasMore(data.hasMore);
-    }
-    setLoading(false);
-  };
-
+  // fetch repos whenever page or query changes
   useEffect(() => {
-    if (status === "authenticated") {
-      loadRepos(page);
-    }
-  }, [status, page]);
+    const fetchRepos = async () => {
+      if (status !== "authenticated") return;
+      setLoading(true);
+
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      if (query.trim()) params.set("q", query.trim());
+
+      const res = await fetch(`/api/repos?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRepos(data.repos);
+        setHasMore(data.hasMore);
+        if (data.username) setUsername(data.username);
+      }
+
+      setLoading(false);
+    };
+
+    fetchRepos();
+  }, [status, page, query]);
+
+  const displayUsername =
+    username ||
+    (session?.user?.name
+      ? session.user.name.split(" ")[0].toLowerCase()
+      : "user");
 
   if (status === "loading") {
     return (
@@ -65,30 +79,57 @@ export default function DashboardPage() {
 
       <main className="max-w-5xl mx-auto px-4 mt-8 space-y-6">
         {/* HEADER */}
-        <div className="flex items-end justify-between border-b border-[var(--acid-border)] pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-[var(--acid-border)] pb-4 gap-3">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white">
-              <span className="text-[var(--acid-primary)]">/root</span>
+              <span className="text-[var(--acid-primary)]">
+                /{displayUsername}
+              </span>
               /repositories
             </h1>
             <p className="text-xs text-[var(--acid-text-dim)] mt-1">
-              Select a target to analyze
+              Select a repository to generate docs from.
             </p>
           </div>
 
-          <div className="text-[10px] text-[var(--acid-secondary)] font-mono">
-            STATUS: CONNECTED
+          {/* Search bar */}
+          <div className="flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => {
+                setPage(1); // reset to first page on new search
+                setQuery(e.target.value);
+              }}
+              placeholder="Search repos by name"
+              className="text-xs font-mono px-3 py-1.5 bg-black border border-[var(--acid-border)] text-[var(--acid-text-main)] placeholder:text-[var(--acid-text-dim)] focus:outline-none focus:border-[var(--acid-primary)] w-60"
+            />
           </div>
         </div>
 
-        {/* REPO LIST */}
+        {/* REPO LIST / SKELETON */}
         {loading ? (
-          <div className="text-center py-20 text-sm text-[var(--acid-text-dim)] font-mono">
-            &gt; FETCHING DATA PACKETS...
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-10">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="acid-card p-4 h-32 animate-pulse flex flex-col justify-between"
+              >
+                <div className="space-y-2">
+                  <div className="h-4 bg-zinc-800 rounded" />
+                  <div className="h-3 bg-zinc-900 rounded w-3/4" />
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="h-3 bg-zinc-800 rounded w-16" />
+                  <div className="h-3 bg-zinc-800 rounded w-12" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : repos.length === 0 ? (
-          <p className="text-sm text-[var(--acid-text-dim)]">
-            No repositories found.
+          <p className="text-sm text-[var(--acid-text-dim)] font-mono py-10">
+            {query
+              ? "> No repositories match this search."
+              : "> No repositories found."}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

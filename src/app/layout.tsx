@@ -6,7 +6,7 @@ import SessionWrapper from "@/components/SessionWrapper";
 const mono = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "RepoCraft // Terminal",
+  title: "RepoCraft",
   description: "AI-powered repository content generator",
 };
 

@@ -24,89 +24,78 @@ export async function POST(
 
   try {
     //
-    // 1. Fetch repo & default branch
+    // 1. Fetch repo info to get default branch (main/master)
     //
     const repoInfo = await octokit.repos.get({ owner, repo });
     const baseBranch = repoInfo.data.default_branch;
 
     //
-    // 2. Get SHA of latest commit in default branch
+    // 2. Get latest commit SHA from default branch
     //
     const branchInfo = await octokit.repos.getBranch({
       owner,
       repo,
-      branch: baseBranch
+      branch: baseBranch,
     });
-    const baseSha = branchInfo.data.commit.sha;
 
-    const branchName = "repocraft-readme-update";
-
-    //
-    // 3. Try creating branch (ignore if exists)
-    //
-    try {
-      await octokit.git.createRef({
-        owner,
-        repo,
-        ref: `refs/heads/${branchName}`,
-        sha: baseSha
-      });
-    } catch (e: any) {
-      // Branch already exists → OK
-      if (e.status !== 422) throw e;
-    }
+    const latestCommitSha = branchInfo.data.commit.sha;
 
     //
-    // 4. Get README SHA (must include when updating)
+    // 3. Try to fetch existing README.md on default branch
     //
-    let currentSha: string | undefined = undefined;
+    let currentReadmeSha: string | undefined;
+    let currentReadmeContent: string | undefined;
 
     try {
       const { data: readmeData } = await octokit.repos.getContent({
         owner,
         repo,
         path: "README.md",
-        ref: branchName // read from target branch
+        ref: baseBranch,
       });
 
-      if (!Array.isArray(readmeData)) {
-        currentSha = readmeData.sha;
+      // Ensure it's a file, not dir/symlink
+      if (!Array.isArray(readmeData) && readmeData.type === "file") {
+        currentReadmeSha = readmeData.sha;
+
+        if (readmeData.content) {
+          const buff = Buffer.from(readmeData.content, "base64");
+          currentReadmeContent = buff.toString("utf-8");
+        }
       }
-    } catch (err) {
-      // README does not exist → SHA stays undefined
+    } catch (e) {
+      // README does not exist — we will create it
+      currentReadmeSha = undefined;
     }
 
     //
-    // 5. Create/update README.md
+    // 4. Commit directly to default branch
     //
-    await octokit.repos.createOrUpdateFileContents({
+    const commitRes = await octokit.repos.createOrUpdateFileContents({
       owner,
       repo,
       path: "README.md",
       message: "Update README via RepoCraft",
       content: Buffer.from(readme).toString("base64"),
-      branch: branchName,
-      sha: currentSha // REQUIRED when updating
+      branch: baseBranch,
+      sha: currentReadmeSha, // required only if updating
     });
 
     //
-    // 6. Create Pull Request
+    // 5. Return commit URL
     //
-    const pr = await octokit.pulls.create({
-      owner,
-      repo,
-      title: "Update README via RepoCraft",
-      head: branchName,
-      base: baseBranch
+    const commitUrl = commitRes.data.commit.html_url;
+    return Response.json({
+      ok: true,
+      url: commitUrl,
+      message: "README updated directly on default branch",
     });
-
-    return Response.json({ prUrl: pr.data.html_url });
   } catch (err: any) {
-    console.error("PR ERROR", err);
+    console.error("DIRECT COMMIT ERROR", err);
     return new Response(
       JSON.stringify({
-        error: "PR creation failed",
-        details: err?.message || err
+        error: "Commit failed",
+        details: err?.message || err,
       }),
       { status: 500 }
     );
