@@ -11,7 +11,7 @@ RepoCraft is an innovative tool that transforms GitHub repositories into high-qu
 ## Tech Stack
 * Frontend: React, Next, React Markdown
 * Backend: Next, Next Auth, Mongoose, Groq SDK
-* Dependencies: @octokit/rest, Axios, Date-FNS, Groq SDK, Mongoose, Next, Next-Auth, React, React-DOM, React-Markdown
+* Dependencies: @octokit/rest, Axios, Date-FNS, Groq SDK, Mongoose, React, React DOM, React Markdown
 
 ## Installation
 1. Clone the repository: `git clone https://github.com/jhapriyansh/repocraft`
@@ -25,14 +25,7 @@ RepoCraft is an innovative tool that transforms GitHub repositories into high-qu
 1. Start the development server: `npm run dev`
 2. Access the application at [http://localhost:3000](http://localhost:3000)
 
-## Configuration
-The following environment variables can be configured:
-* `DATABASE_URL`: MongoDB connection string
-* `GITHUB_TOKEN`: GitHub API token
-* `NEXT_AUTH_SECRET`: Next Auth secret key
-
 ## API Endpoints
-The following API endpoints are available:
 * `GET /api/repos`: Retrieve a list of repositories
 * `GET /api/repos/[name]`: Retrieve details for a specific repository
 * `POST /api/repos/[name]/update-readme`: Update the README for a repository
