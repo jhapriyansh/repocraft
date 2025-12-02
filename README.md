@@ -1,5 +1,5 @@
 # RepoCraft
-RepoCraft is an innovative tool that transforms GitHub repositories into high-quality documentation, portfolio entries, resume bullets, and LinkedIn posts. This project aims to simplify the process of showcasing projects and skills, providing a seamless experience for developers to highlight their work.
+RepoCraft is an innovative tool that transforms GitHub repositories into high-quality documentation, portfolio entries, resume bullets, and LinkedIn posts, simplifying the process of showcasing projects and skills for developers.
 
 ## Features
 * Generate documentation for GitHub repositories
@@ -11,12 +11,15 @@ RepoCraft is an innovative tool that transforms GitHub repositories into high-qu
 ## Tech Stack
 * Frontend: React, Next, React Markdown
 * Backend: Next, Next Auth, Mongoose, Groq SDK
-* Dependencies: Axios, Date-FNS
+* Dependencies: @octokit/rest, Axios, Date-FNS, Groq SDK, Mongoose, Next, Next-Auth, React, React-DOM, React-Markdown
 
 ## Installation
 1. Clone the repository: `git clone https://github.com/jhapriyansh/repocraft`
 2. Install dependencies: `npm install`
-3. Set up environment variables (see below)
+3. Set up environment variables:
+   * `DATABASE_URL`: MongoDB connection string
+   * `GITHUB_TOKEN`: GitHub API token
+   * `NEXT_AUTH_SECRET`: Next Auth secret key
 
 ## Usage
 1. Start the development server: `npm run dev`
