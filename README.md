@@ -1,47 +1,96 @@
-# RepoCraft
-RepoCraft is an innovative tool that transforms GitHub repositories into high-quality documentation, portfolio entries, resume bullets, and LinkedIn posts. This project aims to simplify the process of showcasing projects and skills, providing a seamless experience for developers to highlight their work. Deployed on [vercel](https://repocraft-phi.vercel.app/)
+# **RepoCraft — AI-Powered Repository Documentation Generator**
 
-## Features
-* Generate documentation for GitHub repositories
-* Create portfolio entries and resume bullets from repository data
-* Produce LinkedIn post content based on repository information
-* API endpoints for repository details, usage, and authentication
-* Support for multiple repositories and users
+RepoCraft is a lightweight developer tool that automatically turns any GitHub repository into clean, production-ready documentation.
+It generates **README files, portfolio entries, resume bullets, and LinkedIn posts** directly from your codebase — helping developers showcase their work faster.
 
-## Tech Stack
-* Frontend: React, Next, React Markdown
-* Backend: Next, Next Auth, Mongoose, Groq SDK
-* Dependencies: Axios, Date-FNS
+---
 
-## Installation
-1. Clone the repository: `git clone https://github.com/jhapriyansh/repocraft`
-2. Install dependencies: `npm install`
-3. Set up environment variables (see below)
+## 🚀 Features
 
-## Usage
-1. Start the development server: `npm run dev`
-2. Access the application at [http://localhost:3000](http://localhost:3000)
+* **AI-generated README.md** based on repository structure
+* **Portfolio JSON entries** for quick website updates
+* **Resume bullet-points** extracted from real technical contributions
+* **LinkedIn post summaries** for easy project sharing
+* **GitHub OAuth login** + full repo access
+* **Automatic usage tracking** with daily limits
+* **Terminal-themed UI** with file-tree previews and streaming output
+* **One-click README commit** (via GitHub API)
 
-## Configuration
-The following environment variables can be configured:
-* `DATABASE_URL`: MongoDB connection string
-* `GITHUB_TOKEN`: GitHub API token
-* `NEXT_AUTH_SECRET`: Next Auth secret key
+---
 
-## API Endpoints
-The following API endpoints are available:
-* `GET /api/repos`: Retrieve a list of repositories
-* `GET /api/repos/[name]`: Retrieve details for a specific repository
-* `POST /api/repos/[name]/update-readme`: Update the README for a repository
-* `GET /api/usage`: Retrieve usage data
-* `POST /api/auth/[...nextauth]`: Authentication endpoint
-* `GET /api/generate/readme`: Generate README content
-* `GET /api/generate/portfolio`: Generate portfolio content
-* `GET /api/generate/resume`: Generate resume content
-* `GET /api/generate/linkedin`: Generate LinkedIn post content
+## 🛠 Tech Stack
 
-## Contributing
-Contributions are welcome! Please submit a pull request with your changes and a brief description of the updates.
+### **Frontend**
 
-## License
-RepoCraft is licensed under the [MIT License](https://github.com/jhapriyansh/repocraft/blob/main/LICENSE).
+* Next.js (App Router)
+* React
+* Tailwind CSS
+* React Markdown
+
+### **Backend**
+
+* Next.js API Routes
+* NextAuth (GitHub OAuth)
+* MongoDB + Mongoose
+* Groq LLaMA-3.3 API
+* Octokit (GitHub API)
+
+---
+
+## 📦 Installation
+
+```bash
+git clone https://github.com/jhapriyansh/repocraft
+cd repocraft
+npm install
+```
+
+### **Environment Variables**
+
+```
+DATABASE_URL=<your-mongodb-uri>
+GITHUB_CLIENT_ID=<your-oauth-client-id>
+GITHUB_CLIENT_SECRET=<your-oauth-client-secret>
+NEXTAUTH_SECRET=<random secret>
+```
+
+---
+
+## ▶️ Usage
+
+```bash
+npm run dev
+```
+
+Then open:
+
+🔗 [http://localhost:3000](http://localhost:3000)
+
+Log in with GitHub → select a repository → generate any output.
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Endpoint                          | Description               |
+| ------ | --------------------------------- | ------------------------- |
+| GET    | `/api/repos`                      | List user repos           |
+| GET    | `/api/repos/[name]/details`       | Repo metadata + file tree |
+| POST   | `/api/repos/[name]/update-readme` | Commit README to repo     |
+| GET    | `/api/usage`                      | Daily usage quota         |
+| POST   | `/api/generate/readme`            | Generate README           |
+| POST   | `/api/generate/portfolio`         | Generate portfolio JSON   |
+| POST   | `/api/generate/resume`            | Generate resume bullets   |
+| POST   | `/api/generate/linkedin`          | Generate LinkedIn post    |
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome — bug fixes, features, UI polish, anything!
+
+---
+
+# 🌐 Live Demo
+
+👉 **[https://repocraft-phi.vercel.app](https://repocraft-phi.vercel.app)**
