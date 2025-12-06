@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { owner, name: repoName } = body;
 
-  // Fetch key file contents if keyFiles are provided
   let keyFileContents: Map<string, string> | undefined;
   if (body.keyFiles && (session as any).accessToken) {
     try {
@@ -37,11 +36,9 @@ export async function POST(req: NextRequest) {
       );
     } catch (err) {
       console.error("Error fetching key files:", err);
-      // Continue without key files
     }
   }
 
-  // Convert Map to object for JSON serialization in prompt
   const contextWithFiles = {
     ...body,
     keyFileContents: keyFileContents ? Object.fromEntries(keyFileContents) : undefined

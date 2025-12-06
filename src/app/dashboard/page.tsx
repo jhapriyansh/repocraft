@@ -1,4 +1,3 @@
-// src/app/dashboard/page.tsx
 "use client";
 
 import { useSession, signIn } from "next-auth/react";
@@ -28,14 +27,12 @@ export default function DashboardPage() {
   const [query, setQuery] = useState("");
   const [username, setUsername] = useState<string | null>(null);
 
-  // redirect if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
       signIn("github");
     }
   }, [status]);
 
-  // fetch repos whenever page or query changes
   useEffect(() => {
     const fetchRepos = async () => {
       if (status !== "authenticated") return;
@@ -78,7 +75,6 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="max-w-5xl mx-auto px-4 mt-8 space-y-6">
-        {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-[var(--acid-border)] pb-4 gap-3">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white">
@@ -92,12 +88,11 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Search bar */}
           <div className="flex items-center gap-2">
             <input
               value={query}
               onChange={(e) => {
-                setPage(1); // reset to first page on new search
+                setPage(1);
                 setQuery(e.target.value);
               }}
               placeholder="Search repos by name"
@@ -106,7 +101,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* REPO LIST / SKELETON */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 py-10">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -180,7 +174,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* PAGINATION */}
         <div className="flex items-center justify-center gap-4 mt-8 border-t border-[var(--acid-border)] pt-6">
           <button
             disabled={page === 1}

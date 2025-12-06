@@ -2,7 +2,6 @@ import axios from "axios";
 
 const BASE = "https://api.github.com";
 
-// Universal file extensions
 const INCLUDE_EXTENSIONS = new Set([
   // JavaScript/TypeScript
   "js", "jsx", "ts", "tsx", "mjs", "cjs",
@@ -161,19 +160,14 @@ function getFileExtension(path: string): string {
 }
 
 function shouldIncludeFile(path: string): boolean {
-  // Always exclude ignored patterns
   if (IGNORE_PATTERNS.some(p => p.test(path))) return false;
   
-  // Get extension
   const ext = getFileExtension(path);
   
-  // Include if extension is in allowed list
   if (INCLUDE_EXTENSIONS.has(ext)) return true;
   
-  // Include priority config files even if no extension
   if (PRIORITY_CONFIG_PATTERNS.some(p => p.test(path))) return true;
   
-  // Special cases: files without extensions
   if (path === "Dockerfile" || path === "Makefile" || path === "Gemfile") return true;
   if (path.startsWith(".github/workflows/")) return true;
   
@@ -181,7 +175,6 @@ function shouldIncludeFile(path: string): boolean {
 }
 
 function detectProjectLanguage(files: string[], pkgJson: any): string {
-  // Check package managers
   if (files.some(f => f.endsWith("package.json"))) return "JavaScript/TypeScript";
   if (files.some(f => f.endsWith(".py"))) return "Python";
   if (files.some(f => f.endsWith(".java"))) return "Java";
@@ -247,15 +240,12 @@ export async function fetchRepoDetails(
     }
   }
 
-  // Extract key files from tree (smart prioritization)
   const allFiles = treeData?.tree || [];
   
-  // Get all valid source files
   const validFiles = allFiles.filter((f: any) => 
     f.type === "blob" && shouldIncludeFile(f.path)
   );
   
-  // Separate files by priority
   const priorityConfigs = validFiles.filter((f: any) => 
     PRIORITY_CONFIG_PATTERNS.some(p => p.test(f.path))
   );
@@ -277,15 +267,13 @@ export async function fetchRepoDetails(
     !sourceFiles.some((sf: any) => sf.path === f.path)
   );
   
-  // Prioritize: configs → entry points → source files → other files
   const keyFiles = [
     ...priorityConfigs.slice(0, 10).map((f: any) => f.path),
     ...entryPoints.slice(0, 10).map((f: any) => f.path),
     ...sourceFiles.slice(0, 15).map((f: any) => f.path),
     ...otherFiles.slice(0, 5).map((f: any) => f.path)
-  ].slice(0, 40); // Total limit 40
+  ].slice(0, 40);
 
-  // Detect project language
   const projectLanguage = detectProjectLanguage(keyFiles, pkg);
 
   return {
@@ -293,12 +281,11 @@ export async function fetchRepoDetails(
     tree: treeData,
     readme: readmeData,
     pkgJson: pkg,
-    keyFiles, // Return filtered key files
-    projectLanguage // Return detected language
+    keyFiles,
+    projectLanguage
   };
 }
 
-// Fetch content of key files for LLM context (token-aware)
 export async function fetchKeyFileContents(
   token: string,
   owner: string,
@@ -309,7 +296,6 @@ export async function fetchKeyFileContents(
   let successCount = 0;
   let failCount = 0;
   
-  // Fetch files in parallel (limit concurrency to 5)
   const batchSize = 5;
   for (let i = 0; i < keyFiles.length; i += batchSize) {
     const batch = keyFiles.slice(i, i + batchSize);
@@ -320,11 +306,10 @@ export async function fetchKeyFileContents(
             Authorization: `Bearer ${token}`,
             Accept: "application/vnd.github.raw+json"
           },
-          timeout: 5000 // 5 second timeout per file
+          timeout: 5000
         });
         
         let content = res.data;
-        // Limit file size to 3000 chars for efficiency
         if (typeof content === 'string' && content.length > 3000) {
           content = content.substring(0, 3000) + "\n... [file truncated]";
         }
@@ -364,37 +349,31 @@ export async function createReadmePullRequest(
     }
   });
 
-  // 1. repo info
   const repoRes = await client.get(`/repos/${owner}/${repo}`);
   const baseBranch = repoRes.data.default_branch as string;
 
-  // 2. base branch ref
   const refRes = await client.get(
     `/repos/${owner}/${repo}/git/ref/heads/${baseBranch}`
   );
   const baseCommitSha = refRes.data.object.sha as string;
 
-  // 3. fetch commit to get tree SHA
   const commitRes = await client.get(
     `/repos/${owner}/${repo}/git/commits/${baseCommitSha}`
   );
   const baseTreeSha = commitRes.data.tree.sha as string;
 
-  // 4. new branch
   const branchName = `repocraft/readme-${Date.now()}`;
   await client.post(`/repos/${owner}/${repo}/git/refs`, {
     ref: `refs/heads/${branchName}`,
     sha: baseCommitSha
   });
 
-  // 5. blob for README
   const blobRes = await client.post(`/repos/${owner}/${repo}/git/blobs`, {
     content: readmeContent,
     encoding: "utf-8"
   });
   const blobSha = blobRes.data.sha as string;
 
-  // 6. new tree with README.md
   const treeRes = await client.post(`/repos/${owner}/${repo}/git/trees`, {
     base_tree: baseTreeSha,
     tree: [
@@ -408,7 +387,6 @@ export async function createReadmePullRequest(
   });
   const newTreeSha = treeRes.data.sha as string;
 
-  // 7. commit on new branch
   const commitNewRes = await client.post(`/repos/${owner}/${repo}/git/commits`, {
     message: "chore: update README via RepoCraft",
     tree: newTreeSha,
@@ -416,12 +394,10 @@ export async function createReadmePullRequest(
   });
   const newCommitSha = commitNewRes.data.sha as string;
 
-  // 8. move new branch to new commit
   await client.patch(`/repos/${owner}/${repo}/git/refs/heads/${branchName}`, {
     sha: newCommitSha
   });
 
-  // 9. create PR
   const prRes = await client.post(`/repos/${owner}/${repo}/pulls`, {
     title: "Update README via RepoCraft",
     head: branchName,
@@ -430,5 +406,5 @@ export async function createReadmePullRequest(
       "This README was generated by RepoCraft. Please review and merge if it looks good."
   });
 
-  return prRes.data; // includes html_url
+  return prRes.data;
 }

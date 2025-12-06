@@ -23,15 +23,9 @@ export async function POST(
   const octokit = new Octokit({ auth: token });
 
   try {
-    //
-    // 1. Fetch repo info to get default branch (main/master)
-    //
     const repoInfo = await octokit.repos.get({ owner, repo });
     const baseBranch = repoInfo.data.default_branch;
 
-    //
-    // 2. Get latest commit SHA from default branch
-    //
     const branchInfo = await octokit.repos.getBranch({
       owner,
       repo,
@@ -40,9 +34,6 @@ export async function POST(
 
     const latestCommitSha = branchInfo.data.commit.sha;
 
-    //
-    // 3. Try to fetch existing README.md on default branch
-    //
     let currentReadmeSha: string | undefined;
     let currentReadmeContent: string | undefined;
 
@@ -54,7 +45,6 @@ export async function POST(
         ref: baseBranch,
       });
 
-      // Ensure it's a file, not dir/symlink
       if (!Array.isArray(readmeData) && readmeData.type === "file") {
         currentReadmeSha = readmeData.sha;
 
@@ -64,13 +54,9 @@ export async function POST(
         }
       }
     } catch (e) {
-      // README does not exist — we will create it
       currentReadmeSha = undefined;
     }
 
-    //
-    // 4. Commit directly to default branch
-    //
     const commitRes = await octokit.repos.createOrUpdateFileContents({
       owner,
       repo,
@@ -78,12 +64,9 @@ export async function POST(
       message: "Update README via RepoCraft",
       content: Buffer.from(readme).toString("base64"),
       branch: baseBranch,
-      sha: currentReadmeSha, // required only if updating
+      sha: currentReadmeSha, 
     });
 
-    //
-    // 5. Return commit URL
-    //
     const commitUrl = commitRes.data.commit.html_url;
     return Response.json({
       ok: true,

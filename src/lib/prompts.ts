@@ -10,7 +10,6 @@ type Ctx = {
   projectLanguage?: string;
 };
 
-// Helper to format file contents for context (token-aware)
 function formatKeyFiles(fileContents?: Map<string, string> | Record<string, string>): string {
   if (!fileContents) return "No key files available";
   
@@ -22,7 +21,6 @@ function formatKeyFiles(fileContents?: Map<string, string> | Record<string, stri
   
   const files = entries
     .map(([path, content]) => {
-      // Truncate large files
       const truncated = content.length > 2000 
         ? content.substring(0, 2000) + "\n... [truncated]"
         : content;

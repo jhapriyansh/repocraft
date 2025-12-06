@@ -1,4 +1,3 @@
-// src/app/repo/[name]/page.tsx
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -133,7 +132,6 @@ export default function RepoPage({ params }: { params: { name: string } }) {
             setResult((prev) => prev + chunk);
           }
         }
-        // Final flush for any remaining bytes
         const finalChunk = decoder.decode();
         if (finalChunk) {
           setResult((prev) => prev + finalChunk);
@@ -198,7 +196,6 @@ export default function RepoPage({ params }: { params: { name: string } }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      // ignore
     }
   };
 
@@ -222,9 +219,7 @@ export default function RepoPage({ params }: { params: { name: string } }) {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* LEFT SIDEBAR */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Repo Header */}
             <div className="acid-card p-5 border-l-4 border-l-[var(--acid-primary)]">
               {loadingDetails || !details ? (
                 <div className="space-y-3 animate-pulse">
@@ -261,7 +256,6 @@ export default function RepoPage({ params }: { params: { name: string } }) {
               )}
             </div>
 
-            {/* Tree Summary */}
             {loadingDetails ? (
               <div className="acid-card p-4 animate-pulse">
                 <div className="h-3 w-28 bg-zinc-800 rounded mb-3" />
@@ -284,7 +278,6 @@ export default function RepoPage({ params }: { params: { name: string } }) {
               )
             )}
 
-            {/* Controls */}
             <div className="acid-card p-5 flex flex-col h-auto">
               <p className="text-[10px] text-[var(--acid-text-dim)] uppercase mb-4 tracking-widest">
                 GENERATION PROTOCOLS
@@ -317,7 +310,6 @@ export default function RepoPage({ params }: { params: { name: string } }) {
                 </div>
               )}
 
-              {/* Selection (no network) */}
               <div className="grid grid-cols-1 gap-2 mb-6">
                 {(
                   ["readme", "portfolio", "resume", "linkedin"] as GenType[]
@@ -336,7 +328,6 @@ export default function RepoPage({ params }: { params: { name: string } }) {
                 ))}
               </div>
 
-              {/* Generate button */}
               <div className="mt-auto pt-4 border-t border-[var(--acid-border)]">
                 <button
                   disabled={
@@ -351,10 +342,8 @@ export default function RepoPage({ params }: { params: { name: string } }) {
             </div>
           </div>
 
-          {/* RIGHT PANEL */}
           <div className="lg:col-span-8">
             <div className="acid-card h-full min-h-[500px] flex flex-col">
-              {/* Header */}
               <div className="flex justify-between items-center p-3 border-b border-[var(--acid-border)] bg-[#080808]">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[var(--acid-primary)] animate-pulse" />
@@ -382,7 +371,6 @@ export default function RepoPage({ params }: { params: { name: string } }) {
                 </div>
               </div>
 
-              {/* Body */}
               <div className="flex-1 p-6 overflow-auto max-h-[700px] relative">
                 {statusMsg && (
                   <div className="absolute top-0 left-0 right-0 bg-[var(--acid-secondary)] text-white text-xs py-1 text-center font-bold">

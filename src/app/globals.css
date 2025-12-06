@@ -2,17 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- THEME TOKENS (ACID TERMINAL) ---------- */
+
 :root {
   color-scheme: dark;
 
-  --acid-bg: #050505; /* Almost pure black */
-  --acid-card: #000000; /* Pure black */
-  --acid-border: #333333; /* Dark grey for inactive borders */
-  --acid-border-active: #c9ff00; /* Acid Lime */
+  --acid-bg: #050505;
+  --acid-card: #000000;
+  --acid-border: #333333;
+  --acid-border-active: #c9ff00;
 
-  --acid-primary: #c9ff00; /* Lime */
-  --acid-secondary: #7c3aed; /* Electric Purple */
+  --acid-primary: #c9ff00;
+  --acid-secondary: #7c3aed;
 
   --acid-text-main: #eeeeee;
   --acid-text-dim: #888888;
@@ -27,7 +27,6 @@ body {
 
 body {
   background-color: var(--acid-bg);
-  /* Subtle mesh gradient background */
   background-image: radial-gradient(
       circle at 15% 50%,
       rgba(124, 58, 237, 0.08),
@@ -37,9 +36,6 @@ body {
   color: var(--acid-text-main);
 }
 
-/* ---------- COMPONENT UTILITIES ---------- */
-
-/* The Main Card Container */
 .acid-card {
   background-color: var(--acid-card);
   border: 1px solid var(--acid-border);
@@ -49,14 +45,12 @@ body {
   overflow: hidden;
 }
 
-/* Hover effect for interactive cards */
 .acid-card-interactive:hover {
   border-color: var(--acid-primary);
   box-shadow: 0 0 15px -3px rgba(201, 255, 0, 0.2);
   transform: translateY(-2px);
 }
 
-/* Ghost Button (Outline) */
 .acid-btn-ghost {
   display: inline-flex;
   align-items: center;
@@ -85,7 +79,6 @@ body {
   cursor: not-allowed;
 }
 
-/* Primary Button (Filled) */
 .acid-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -107,7 +100,6 @@ body {
   box-shadow: 0 0 15px rgba(201, 255, 0, 0.5);
 }
 
-/* Tech Pills (Tags) */
 .acid-pill {
   display: inline-flex;
   padding: 0.1rem 0.5rem;
@@ -118,7 +110,6 @@ body {
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* Scrollbar customization */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

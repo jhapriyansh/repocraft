@@ -1,8 +1,7 @@
 import "./globals.css";
-import { JetBrains_Mono } from "next/font/google"; // Changed font
+import { JetBrains_Mono } from "next/font/google";
 import SessionWrapper from "@/components/SessionWrapper";
 
-// Using a coding font is crucial for this aesthetic
 const mono = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata = {

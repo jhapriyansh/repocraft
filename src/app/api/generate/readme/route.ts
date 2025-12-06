@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
   const user = await getUserByProviderId(providerId);
   if (!user) return new Response("User not found", { status: 404 });
 
-  // Rate limit only if user has no custom key
   if (!user.apiKey) {
     const { allowed } = await checkRateLimit(user._id.toString());
     if (!allowed) {
@@ -31,7 +30,6 @@ export async function POST(req: NextRequest) {
   console.log(`[README] Generating for ${owner}/${repoName}`);
   console.log(`[README] KeyFiles provided: ${body.keyFiles?.length || 0}`);
 
-  // Fetch key file contents if keyFiles are provided
   let keyFileContents: Map<string, string> | undefined;
   if (body.keyFiles && body.keyFiles.length > 0 && (session as any).accessToken) {
     try {
@@ -45,13 +43,11 @@ export async function POST(req: NextRequest) {
       console.log(`[README] Successfully fetched ${keyFileContents.size} files`);
     } catch (err) {
       console.error("[README] Error fetching key files:", err);
-      // Continue without key files
     }
   } else {
     console.log(`[README] No keyFiles or accessToken available`);
   }
 
-  // Convert Map to object for JSON serialization in prompt
   const contextWithFiles = {
     ...body,
     keyFileContents: keyFileContents ? Object.fromEntries(keyFileContents) : undefined

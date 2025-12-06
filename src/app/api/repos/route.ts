@@ -1,4 +1,3 @@
-// src/app/api/repos/route.ts
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -19,7 +18,6 @@ export async function GET(req: NextRequest) {
   const octokit = new Octokit({ auth: token });
 
   try {
-    // Get current user login
     const { data: me } = await octokit.request("GET /user");
     const userLogin = me.login;
 
@@ -27,7 +25,6 @@ export async function GET(req: NextRequest) {
     let hasMore = false;
 
     if (q) {
-      // Search in user's repos
       const searchRes = await octokit.search.repos({
         q: `${q} user:${userLogin}`,
         per_page: perPage,
@@ -45,9 +42,8 @@ export async function GET(req: NextRequest) {
         htmlUrl: r.html_url
       }));
 
-      hasMore = page * perPage < Math.min(searchRes.data.total_count, 1000); // GH caps search
+      hasMore = page * perPage < Math.min(searchRes.data.total_count, 1000);
     } else {
-      // Normal paginated repos list
       const listRes = await octokit.repos.listForAuthenticatedUser({
         per_page: perPage,
         page,

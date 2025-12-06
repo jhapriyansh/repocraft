@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
@@ -17,7 +16,6 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 relative overflow-hidden">
-      {/* subtle top line */}
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--acid-primary)] to-transparent opacity-40" />
 
       <div className="acid-card max-w-xl w-full p-10 text-center border-t-4 border-t-[var(--acid-primary)] shadow-[0_0_50px_-20px_rgba(201,255,0,0.15)]">
