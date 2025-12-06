@@ -5,6 +5,7 @@ import { getUserByProviderId } from "@/lib/getUserByProviderId";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { streamLLM } from "@/lib/llm";
 import { buildReadmePrompt } from "@/lib/prompts";
+import { fetchKeyFileContents } from "@/lib/github";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -25,7 +26,39 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const prompt = buildReadmePrompt(body);
+  const { owner, name: repoName } = body;
+  
+  console.log(`[README] Generating for ${owner}/${repoName}`);
+  console.log(`[README] KeyFiles provided: ${body.keyFiles?.length || 0}`);
+
+  // Fetch key file contents if keyFiles are provided
+  let keyFileContents: Map<string, string> | undefined;
+  if (body.keyFiles && body.keyFiles.length > 0 && (session as any).accessToken) {
+    try {
+      console.log(`[README] Fetching ${body.keyFiles.length} key files...`);
+      keyFileContents = await fetchKeyFileContents(
+        (session as any).accessToken,
+        owner,
+        repoName,
+        body.keyFiles
+      );
+      console.log(`[README] Successfully fetched ${keyFileContents.size} files`);
+    } catch (err) {
+      console.error("[README] Error fetching key files:", err);
+      // Continue without key files
+    }
+  } else {
+    console.log(`[README] No keyFiles or accessToken available`);
+  }
+
+  // Convert Map to object for JSON serialization in prompt
+  const contextWithFiles = {
+    ...body,
+    keyFileContents: keyFileContents ? Object.fromEntries(keyFileContents) : undefined
+  };
+
+  const prompt = buildReadmePrompt(contextWithFiles);
+  console.log(`[README] Prompt prepared, sending to LLM...`);
 
   const stream = await streamLLM(prompt);
 

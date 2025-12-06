@@ -2,6 +2,66 @@ import axios from "axios";
 
 const BASE = "https://api.github.com";
 
+// Key file patterns to extract for context (token-aware)
+const KEY_FILE_PATTERNS = [
+  // Config files - highest priority
+  /package\.json$/,
+  /tsconfig\.json$/,
+  /vite\.config\.[jt]sx?$/,
+  /next\.config\.[jt]sx?$/,
+  /babel\.config\.[jt]sx?$/,
+  /jest\.config\.[jt]sx?$/,
+  /webpack\.config\.[jt]sx?$/,
+  /\.eslintrc/,
+  /\.prettierrc/,
+  /README\.md$/i,
+  /\.env\.example$/,
+  /Dockerfile$/,
+  /docker-compose\.ya?ml$/,
+  /\.github\/workflows\//,
+  
+  // Main entry points and core files
+  /src\/main\.[jt]sx?$/,
+  /src\/index\.[jt]sx?$/,
+  /src\/app\.[jt]sx?$/,
+  /src\/App\.[jt]sx?$/,
+  /pages\/index\.[jt]sx?$/,
+  /pages\/\[\.\.\.\w+\]\.[jt]sx?$/,
+  
+  // Component files
+  /src\/components\/.*\.[jt]sx?$/,
+  /src\/pages\/.*\.[jt]sx?$/,
+  /src\/routes\/.*\.[jt]sx?$/,
+  /src\/lib\/.*\.[jt]sx?$/,
+  /src\/utils\/.*\.[jt]sx?$/,
+  /src\/hooks\/.*\.[jt]sx?$/,
+  /src\/context\/.*\.[jt]sx?$/,
+  /src\/services\/.*\.[jt]sx?$/,
+  /src\/api\/.*\.[jt]sx?$/,
+  /src\/store\/.*\.[jt]sx?$/,
+  
+  // Any TypeScript/JavaScript file (fallback)
+  /\.[jt]sx?$/,
+];
+
+const IGNORE_PATTERNS = [
+  /node_modules/,
+  /\.next/,
+  /dist/,
+  /build/,
+  /\.git/,
+  /\.env$/,
+  /\.env\.local$/,
+  /coverage/,
+  /\.test\.[jt]sx?$/,
+  /\.spec\.[jt]sx?$/
+];
+
+function shouldIncludeFile(path: string): boolean {
+  if (IGNORE_PATTERNS.some(p => p.test(path))) return false;
+  return KEY_FILE_PATTERNS.some(p => p.test(path));
+}
+
 export async function fetchUserRepos(token: string) {
   const res = await axios.get(`${BASE}/user/repos`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -51,12 +111,84 @@ export async function fetchRepoDetails(
     }
   }
 
+  // Extract key files from tree (smart prioritization)
+  const allFiles = treeData?.tree || [];
+  
+  // Separate files by priority
+  const configFiles = allFiles.filter((f: any) => 
+    f.type === "blob" && /^(package\.json|vite\.config|next\.config|tsconfig|README)/.test(f.path)
+  );
+  
+  const sourceFiles = allFiles.filter((f: any) => 
+    f.type === "blob" && shouldIncludeFile(f.path) && 
+    !configFiles.some((cf: any) => cf.path === f.path)
+  );
+  
+  // Prioritize: configs first, then main sources, then other files
+  const keyFiles = [
+    ...configFiles.map((f: any) => f.path),
+    ...sourceFiles.slice(0, 35).map((f: any) => f.path)
+  ].slice(0, 40); // Total limit 40
+
   return {
     repoInfo,
     tree: treeData,
     readme: readmeData,
-    pkgJson: pkg
+    pkgJson: pkg,
+    keyFiles // Return filtered key files
   };
+}
+
+// Fetch content of key files for LLM context (token-aware)
+export async function fetchKeyFileContents(
+  token: string,
+  owner: string,
+  repo: string,
+  keyFiles: string[]
+): Promise<Map<string, string>> {
+  const fileContents = new Map<string, string>();
+  let successCount = 0;
+  let failCount = 0;
+  
+  // Fetch files in parallel (limit concurrency to 5)
+  const batchSize = 5;
+  for (let i = 0; i < keyFiles.length; i += batchSize) {
+    const batch = keyFiles.slice(i, i + batchSize);
+    const promises = batch.map(async (path) => {
+      try {
+        const res = await axios.get(`${BASE}/repos/${owner}/${repo}/contents/${path}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.raw+json"
+          },
+          timeout: 5000 // 5 second timeout per file
+        });
+        
+        let content = res.data;
+        // Limit file size to 3000 chars for efficiency
+        if (typeof content === 'string' && content.length > 3000) {
+          content = content.substring(0, 3000) + "\n... [file truncated]";
+        }
+        return { path, content, success: true };
+      } catch (err: any) {
+        console.error(`Failed to fetch ${path}:`, err.message);
+        return { path, content: null, success: false };
+      }
+    });
+    
+    const results = await Promise.all(promises);
+    results.forEach(({ path, content, success }) => {
+      if (success && content) {
+        fileContents.set(path, content);
+        successCount++;
+      } else {
+        failCount++;
+      }
+    });
+  }
+  
+  console.log(`Fetched ${successCount}/${keyFiles.length} key files (${failCount} failed)`);
+  return fileContents;
 }
 
 export async function createReadmePullRequest(

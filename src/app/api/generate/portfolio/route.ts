@@ -5,6 +5,7 @@ import { getUserByProviderId } from "@/lib/getUserByProviderId";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { streamLLM } from "@/lib/llm";
 import { buildPortfolioPrompt } from "@/lib/prompts";
+import { fetchKeyFileContents } from "@/lib/github";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -22,7 +23,31 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const prompt = buildPortfolioPrompt(body);
+  const { owner, name: repoName } = body;
+
+  // Fetch key file contents if keyFiles are provided
+  let keyFileContents: Map<string, string> | undefined;
+  if (body.keyFiles && (session as any).accessToken) {
+    try {
+      keyFileContents = await fetchKeyFileContents(
+        (session as any).accessToken,
+        owner,
+        repoName,
+        body.keyFiles
+      );
+    } catch (err) {
+      console.error("Error fetching key files:", err);
+      // Continue without key files
+    }
+  }
+
+  // Convert Map to object for JSON serialization in prompt
+  const contextWithFiles = {
+    ...body,
+    keyFileContents: keyFileContents ? Object.fromEntries(keyFileContents) : undefined
+  };
+
+  const prompt = buildPortfolioPrompt(contextWithFiles);
 
   const stream = await streamLLM(prompt);
 

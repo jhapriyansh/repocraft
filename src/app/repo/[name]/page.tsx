@@ -12,6 +12,7 @@ type RepoDetails = {
   treeSummary: string;
   readme: string | null;
   pkgJson: any;
+  keyFiles?: string[];
 };
 
 type GenType = "readme" | "portfolio" | "resume" | "linkedin";
@@ -86,6 +87,9 @@ export default function RepoPage({ params }: { params: { name: string } }) {
       pkgJson: details.pkgJson,
       readme: details.readme,
       repoUrl,
+      owner,
+      name: params.name,
+      keyFiles: details.keyFiles,
     };
 
     try {
