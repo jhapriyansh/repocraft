@@ -13,6 +13,8 @@ type RepoDetails = {
   readme: string | null;
   pkgJson: any;
   keyFiles?: string[];
+  liveUrl?: string | null;
+  projectLanguage?: string;
 };
 
 type GenType = "readme" | "portfolio" | "resume" | "linkedin";
@@ -90,6 +92,8 @@ export default function RepoPage({ params }: { params: { name: string } }) {
       owner,
       name: params.name,
       keyFiles: details.keyFiles,
+      liveUrl: details.liveUrl,
+      projectLanguage: details.projectLanguage,
     };
 
     try {
@@ -116,12 +120,28 @@ export default function RepoPage({ params }: { params: { name: string } }) {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let totalChunks = 0;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        setResult((prev) => prev + chunk);
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          if (chunk) {
+            totalChunks++;
+            setResult((prev) => prev + chunk);
+          }
+        }
+        // Final flush for any remaining bytes
+        const finalChunk = decoder.decode();
+        if (finalChunk) {
+          setResult((prev) => prev + finalChunk);
+        }
+        console.log(`Streaming complete: ${totalChunks} chunks received`);
+      } catch (streamErr) {
+        console.error("Stream reading error:", streamErr);
+        throw streamErr;
       }
 
       setUsage((prev) =>
@@ -386,20 +406,30 @@ export default function RepoPage({ params }: { params: { name: string } }) {
                   </div>
                 ) : result ? (
                   active === "readme" || active === "linkedin" ? (
-                    <ReactMarkdown
-                      className="prose prose-invert prose-sm max-w-none 
-                      prose-headings:text-[var(--acid-primary)] prose-headings:font-bold prose-headings:uppercase
-                      prose-a:text-[var(--acid-secondary)] prose-a:no-underline hover:prose-a:underline
-                      prose-code:text-[#ff79c6] prose-code:bg-[#1f2937] prose-code:px-1 prose-code:rounded-none
-                      prose-pre:bg-[#0b0b0b] prose-pre:border prose-pre:border-[var(--acid-border)]
-                      font-mono"
-                    >
-                      {result}
-                    </ReactMarkdown>
+                    <div className="relative">
+                      <ReactMarkdown
+                        className="prose prose-invert prose-sm max-w-none 
+                        prose-headings:text-[var(--acid-primary)] prose-headings:font-bold prose-headings:uppercase
+                        prose-a:text-[var(--acid-secondary)] prose-a:no-underline hover:prose-a:underline
+                        prose-code:text-[#ff79c6] prose-code:bg-[#1f2937] prose-code:px-1 prose-code:rounded-none
+                        prose-pre:bg-[#0b0b0b] prose-pre:border prose-pre:border-[var(--acid-border)]
+                        font-mono"
+                      >
+                        {result}
+                      </ReactMarkdown>
+                      {genLoading && (
+                        <span className="inline-block w-2 h-4 ml-1 bg-[var(--acid-primary)] animate-pulse" />
+                      )}
+                    </div>
                   ) : (
-                    <pre className="whitespace-pre-wrap break-words text-xs text-[#a9b1d6] font-mono">
-                      {result}
-                    </pre>
+                    <div className="relative">
+                      <pre className="whitespace-pre-wrap break-words text-xs text-[#a9b1d6] font-mono">
+                        {result}
+                      </pre>
+                      {genLoading && (
+                        <span className="inline-block w-2 h-4 ml-1 bg-[var(--acid-primary)] animate-pulse" />
+                      )}
+                    </div>
                   )
                 ) : (
                   <div className="h-full flex items-center justify-center text-[var(--acid-text-dim)] text-xs font-mono">

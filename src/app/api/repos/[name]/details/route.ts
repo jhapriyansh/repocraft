@@ -24,9 +24,13 @@ export async function GET(
   const tree = details.tree?.tree || [];
   const firstFiles = tree.slice(0, 80).map((f: any) => f.path);
   const treeSummary = firstFiles.join("\n");
+  
+  // Extract homepage URL from repo about section
+  const liveUrl = details.repoInfo?.homepage || null;
 
   return NextResponse.json({
     ...details,
-    treeSummary
+    treeSummary,
+    liveUrl
   });
 }

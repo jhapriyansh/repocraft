@@ -2,10 +2,79 @@ import axios from "axios";
 
 const BASE = "https://api.github.com";
 
-// Key file patterns to extract for context (token-aware)
-const KEY_FILE_PATTERNS = [
-  // Config files - highest priority
+// Universal file extensions
+const INCLUDE_EXTENSIONS = new Set([
+  // JavaScript/TypeScript
+  "js", "jsx", "ts", "tsx", "mjs", "cjs",
+  // Python
+  "py", "pyi", "pyc",
+  // Java/Kotlin
+  "java", "kt", "gradle", "maven",
+  // C/C++
+  "c", "h", "cpp", "cc", "hpp", "cxx", "c++",
+  // Go
+  "go",
+  // Rust
+  "rs",
+  // Shell scripts
+  "sh", "bash", "zsh", "ps1",
+  // Web
+  "html", "htm", "vue", "svelte",
+  // Styles
+  "css", "scss", "sass", "less",
+  // Config/Data
+  "json", "yaml", "yml", "toml", "ini", "cfg", "conf",
+  // Infrastructure
+  "tf", "tfvars", "hcl", "dockerfile",
+  // Documentation
+  "md", "mdx", "rst", "txt",
+  // Notebooks
+  "ipynb",
+  // Build config (generic)
+  "xml", "gradle"
+]);
+
+const EXCLUDE_EXTENSIONS = new Set([
+  // Secrets
+  "env", "key", "pem", "p12", "pfx", "pkcs12",
+  // Images
+  "png", "jpg", "jpeg", "gif", "ico", "svg", "webp", "bmp", "tiff", "psd", "ai",
+  // Archives
+  "zip", "tar", "gz", "rar", "7z", "bz2",
+  // Binaries
+  "exe", "dll", "bin", "so", "dylib", "o", "a", "lib",
+  // Documents
+  "pdf", "docx", "doc", "pptx", "ppt", "xlsx", "xls",
+  // Databases
+  "sqlite", "db", "sqlite3", "mdb",
+  // Generated/Built
+  "min.js", "map", "log", "out",
+  // System files
+  "ds_store", "thumbs.db"
+]);
+
+// Key file patterns - highest priority config files
+const PRIORITY_CONFIG_PATTERNS = [
+  // Package managers
   /package\.json$/,
+  /requirements\.txt$/,
+  /pyproject\.toml$/,
+  /setup\.py$/,
+  /setup\.cfg$/,
+  /Pipfile$/,
+  /poetry\.lock$/,
+  /pom\.xml$/,
+  /build\.gradle$/,
+  /build\.gradle\.kts$/,
+  /Gemfile$/,
+  /Gemfile\.lock$/,
+  /go\.mod$/,
+  /go\.sum$/,
+  /Cargo\.toml$/,
+  /Cargo\.lock$/,
+  /composer\.json$/,
+  
+  // JS/TS Config
   /tsconfig\.json$/,
   /vite\.config\.[jt]sx?$/,
   /next\.config\.[jt]sx?$/,
@@ -14,34 +83,49 @@ const KEY_FILE_PATTERNS = [
   /webpack\.config\.[jt]sx?$/,
   /\.eslintrc/,
   /\.prettierrc/,
+  
+  // Documentation & Container
   /README\.md$/i,
-  /\.env\.example$/,
   /Dockerfile$/,
   /docker-compose\.ya?ml$/,
   /\.github\/workflows\//,
-  
-  // Main entry points and core files
+];
+
+// Entry points for common languages
+const ENTRY_POINT_PATTERNS = [
+  // Python
+  /src\/main\.py$/,
+  /src\/__main__\.py$/,
+  /app\.py$/,
+  /main\.py$/,
+  // Java
+  /src\/main\/java\/.*\.java$/,
+  // Go
+  /cmd\/.*\/main\.go$/,
+  /main\.go$/,
+  // Rust
+  /src\/main\.rs$/,
+  // JS/TS
   /src\/main\.[jt]sx?$/,
   /src\/index\.[jt]sx?$/,
   /src\/app\.[jt]sx?$/,
   /src\/App\.[jt]sx?$/,
   /pages\/index\.[jt]sx?$/,
-  /pages\/\[\.\.\.\w+\]\.[jt]sx?$/,
-  
-  // Component files
-  /src\/components\/.*\.[jt]sx?$/,
-  /src\/pages\/.*\.[jt]sx?$/,
-  /src\/routes\/.*\.[jt]sx?$/,
-  /src\/lib\/.*\.[jt]sx?$/,
-  /src\/utils\/.*\.[jt]sx?$/,
-  /src\/hooks\/.*\.[jt]sx?$/,
-  /src\/context\/.*\.[jt]sx?$/,
-  /src\/services\/.*\.[jt]sx?$/,
-  /src\/api\/.*\.[jt]sx?$/,
-  /src\/store\/.*\.[jt]sx?$/,
-  
-  // Any TypeScript/JavaScript file (fallback)
-  /\.[jt]sx?$/,
+  /index\.[jt]sx?$/,
+];
+
+// Core source file patterns by category
+const SOURCE_PATTERNS = [
+  // API/Routes
+  /src\/(api|routes|server|handlers)\/.*\.(js|ts|py|java|go|rs|php)$/,
+  // Models/Data
+  /src\/(models|entities|schemas|database)\/.*\.(js|ts|py|java|go|rs)$/,
+  // Utils/Helpers
+  /src\/(utils|helpers|lib|common)\/.*\.(js|ts|py|java|go|rs)$/,
+  // Components (for web)
+  /src\/(components|pages|views)\/.*\.(jsx?|tsx?|vue|svelte)$/,
+  // Hooks/Services
+  /src\/(hooks|services|middleware)\/.*\.(js|ts|py|java|go|rs)$/,
 ];
 
 const IGNORE_PATTERNS = [
@@ -49,17 +133,69 @@ const IGNORE_PATTERNS = [
   /\.next/,
   /dist/,
   /build/,
+  /out/,
+  /target/,
   /\.git/,
   /\.env$/,
   /\.env\.local$/,
   /coverage/,
+  /venv/,
+  /__pycache__/,
+  /\.pytest_cache/,
+  /\.venv/,
+  /\.idea/,
+  /\.vscode/,
+  /vendor/,
+  /\.gradle/,
+  /\.m2/,
+  /\.cargo/,
   /\.test\.[jt]sx?$/,
-  /\.spec\.[jt]sx?$/
+  /\.spec\.[jt]sx?$/,
+  /\.min\.js$/,
+  /\.map$/,
 ];
 
+function getFileExtension(path: string): string {
+  const match = path.match(/\.([^.]+)$/);
+  return match ? match[1].toLowerCase() : "";
+}
+
 function shouldIncludeFile(path: string): boolean {
+  // Always exclude ignored patterns
   if (IGNORE_PATTERNS.some(p => p.test(path))) return false;
-  return KEY_FILE_PATTERNS.some(p => p.test(path));
+  
+  // Get extension
+  const ext = getFileExtension(path);
+  
+  // Include if extension is in allowed list
+  if (INCLUDE_EXTENSIONS.has(ext)) return true;
+  
+  // Include priority config files even if no extension
+  if (PRIORITY_CONFIG_PATTERNS.some(p => p.test(path))) return true;
+  
+  // Special cases: files without extensions
+  if (path === "Dockerfile" || path === "Makefile" || path === "Gemfile") return true;
+  if (path.startsWith(".github/workflows/")) return true;
+  
+  return false;
+}
+
+function detectProjectLanguage(files: string[], pkgJson: any): string {
+  // Check package managers
+  if (files.some(f => f.endsWith("package.json"))) return "JavaScript/TypeScript";
+  if (files.some(f => f.endsWith(".py"))) return "Python";
+  if (files.some(f => f.endsWith(".java"))) return "Java";
+  if (files.some(f => f.endsWith(".kt"))) return "Kotlin";
+  if (files.some(f => f.endsWith(".go"))) return "Go";
+  if (files.some(f => f.endsWith(".rs"))) return "Rust";
+  if (files.some(f => f.endsWith(".cpp") || f.endsWith(".cc") || f.endsWith(".cxx"))) return "C++";
+  if (files.some(f => f.endsWith(".c"))) return "C";
+  if (files.some(f => f.endsWith(".rb"))) return "Ruby";
+  if (files.some(f => f.endsWith(".php"))) return "PHP";
+  if (files.some(f => f.endsWith(".cs"))) return "C#";
+  if (files.some(f => f.endsWith(".swift"))) return "Swift";
+  
+  return "Multi-language";
 }
 
 export async function fetchUserRepos(token: string) {
@@ -114,28 +250,51 @@ export async function fetchRepoDetails(
   // Extract key files from tree (smart prioritization)
   const allFiles = treeData?.tree || [];
   
+  // Get all valid source files
+  const validFiles = allFiles.filter((f: any) => 
+    f.type === "blob" && shouldIncludeFile(f.path)
+  );
+  
   // Separate files by priority
-  const configFiles = allFiles.filter((f: any) => 
-    f.type === "blob" && /^(package\.json|vite\.config|next\.config|tsconfig|README)/.test(f.path)
+  const priorityConfigs = validFiles.filter((f: any) => 
+    PRIORITY_CONFIG_PATTERNS.some(p => p.test(f.path))
   );
   
-  const sourceFiles = allFiles.filter((f: any) => 
-    f.type === "blob" && shouldIncludeFile(f.path) && 
-    !configFiles.some((cf: any) => cf.path === f.path)
+  const entryPoints = validFiles.filter((f: any) => 
+    ENTRY_POINT_PATTERNS.some(p => p.test(f.path)) &&
+    !priorityConfigs.some((cf: any) => cf.path === f.path)
   );
   
-  // Prioritize: configs first, then main sources, then other files
+  const sourceFiles = validFiles.filter((f: any) => 
+    SOURCE_PATTERNS.some(p => p.test(f.path)) &&
+    !priorityConfigs.some((cf: any) => cf.path === f.path) &&
+    !entryPoints.some((ep: any) => ep.path === f.path)
+  );
+  
+  const otherFiles = validFiles.filter((f: any) => 
+    !priorityConfigs.some((cf: any) => cf.path === f.path) &&
+    !entryPoints.some((ep: any) => ep.path === f.path) &&
+    !sourceFiles.some((sf: any) => sf.path === f.path)
+  );
+  
+  // Prioritize: configs → entry points → source files → other files
   const keyFiles = [
-    ...configFiles.map((f: any) => f.path),
-    ...sourceFiles.slice(0, 35).map((f: any) => f.path)
+    ...priorityConfigs.slice(0, 10).map((f: any) => f.path),
+    ...entryPoints.slice(0, 10).map((f: any) => f.path),
+    ...sourceFiles.slice(0, 15).map((f: any) => f.path),
+    ...otherFiles.slice(0, 5).map((f: any) => f.path)
   ].slice(0, 40); // Total limit 40
+
+  // Detect project language
+  const projectLanguage = detectProjectLanguage(keyFiles, pkg);
 
   return {
     repoInfo,
     tree: treeData,
     readme: readmeData,
     pkgJson: pkg,
-    keyFiles // Return filtered key files
+    keyFiles, // Return filtered key files
+    projectLanguage // Return detected language
   };
 }
 

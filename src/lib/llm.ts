@@ -26,15 +26,17 @@ export async function streamLLM(prompt: string): Promise<ReadableStream<Uint8Arr
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
 
+  // Start streaming in background without blocking
   (async () => {
     try {
       for await (const chunk of groqStream) {
         const delta = chunk.choices[0]?.delta?.content || "";
         if (!delta) continue;
-        await writer.write(encoder.encode(delta));
+        const encoded = encoder.encode(delta);
+        await writer.write(encoded);
       }
     } catch (err) {
-      console.error("streamLLM error", err);
+      console.error("streamLLM error:", err);
     } finally {
       await writer.close();
     }
